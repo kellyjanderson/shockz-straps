@@ -4,7 +4,7 @@ $fn = $preview ? 32 : 128;
 
 // Cuff parameters
 cuff_inner_diameter = 3;    // Inner diameter in mm
-cuff_outer_diameter = 10;  // Outer diameter in mm
+cuff_outer_diameter = 8;  // Outer diameter in mm
 cuff_gap = 0.4;             // Gap for mounting in mm
 cuff_height = 8;            // Height of cuff in mm
 
@@ -12,11 +12,16 @@ cuff_height = 8;            // Height of cuff in mm
 // Strap parameters
 strap_thickness = 3;        // Thickness in mm
 strap_width = 20;           // Width in mm
-strap_length = 200;         // Length in mm
+strap_length = 150;         // Length in mm
 cable_width = 4;            // Width of the thin cable section in mm
 taper_length = 20;          // Length of the taper from strap to cable in mm
 cable_section_length = 5;  // Length of the straight cable section at each end
 
+// Ridge parameters
+ridge_height = 0;         // Height of the ridge from the strap surface
+ridge_width = 8;            // Width of the ridge at its base
+ridge_length = 190;         // Length of the ridge (set to strap_length for cuff-to-cuff)
+ridge_offset = 0;           // Transverse offset from the strap's centerline
 
 // Create the complete strap module
 module headphone_strap() {
@@ -33,6 +38,9 @@ module headphone_strap() {
     translate([strap_length/2, 0, cuff_outer_diameter/2 - strap_thickness/2])
         rotate([90, 0, 0])
         cuff_with_gap();
+
+    // Add the ridge
+    ridge();
 }
 
 }
@@ -80,6 +88,39 @@ module strap_body() {
     // Right cable section
     translate([strap_length/2 - cable_section_length/2, 0, 0])
         cube([cable_section_length, cable_width, strap_thickness], center=true);
+}
+
+// Module for the reinforcing ridge
+module ridge() {
+    // Calculate the length of the strap's non-tapered central section
+    strap_center_len = strap_length - 2 * cable_section_length - 2 * taper_length;
+
+    // Position the ridge on the strap's main surface
+    translate([0, ridge_offset, strap_thickness/2]) {
+        // Use hull to create a tapered ridge if it's long enough
+        if (ridge_length > strap_center_len) {
+            hull() {
+                // Central wide part of the ridge
+                ridge_segment(strap_center_len, ridge_width, ridge_height, center=true);
+                // Narrow ends of the ridge
+                translate([-ridge_length/2, 0, 0]) 
+                    ridge_segment(0.1, cable_width, ridge_height, center=true);
+                translate([ridge_length/2, 0, 0]) 
+                    ridge_segment(0.1, cable_width, ridge_height, center=true);
+            }
+        } else {
+            // If the ridge is short, just create a non-tapered version
+            ridge_segment(ridge_length, ridge_width, ridge_height);
+        }
+    }
+}
+
+// Helper module for a semi-elliptical ridge segment
+module ridge_segment(l, w, h, center=false) {
+    intersection() {
+        scale([1, 1, h / w]) rotate([0, 90, 0]) cylinder(h=l, d=w, center=center);
+        translate([center ? 0 : l/2, 0, h/2]) cube([l+1, w+1, h], center=true);
+    }
 }
 
 // Render the complete model
