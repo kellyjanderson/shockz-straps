@@ -1,4 +1,4 @@
-// TPU Strap for Shokz Induction Headphones
+// TPU Fit Adjustment Strap for Shokz Bone Conduction Headphones
 // Designed for flexible 3D printing
 $fn = $preview ? 32 : 128;
 
