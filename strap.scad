@@ -44,7 +44,7 @@ module headphone_strap() {
                 ridge();
             }
             // Position for the slots, 2mm into the taper
-            slot_x_pos = (strap_length/2) - cable_section_length - taper_length + 2;
+            slot_x_pos = (strap_length/2) - cable_section_length - taper_length - 2; // Moved 4mm towards center
             // Right slot
             translate([slot_x_pos, 0, 0]) fastener_slot();
             // Left slot
@@ -103,8 +103,10 @@ module strap_body() {
 
 // Module for the T-bar fastener slot
 module fastener_slot() {
-    translate([0, 0, strap_thickness/2])
-        cube([bar_length * 1.1, bar_diameter * 1.1, strap_thickness + 1], center=true);
+    // Center the slot vertically on the combined strap and ridge
+    total_height = strap_thickness + ridge_height;
+    translate([0, 0, (total_height - strap_thickness)/2])
+        cube([bar_length * 1.1, bar_diameter * 1.1, total_height + 2], center=true);
 }
 
 // Module for the reinforcing ridge
