@@ -1,21 +1,27 @@
+use <cuff_prototype.scad>
+
 // TPU Fit Adjustment Strap for Shokz Bone Conduction Headphones
 // Designed for flexible 3D printing
 $fn = $preview ? 32 : 128;
 
 // Cuff parameters
-cuff_inner_diameter = 3;    // Inner diameter in mm
-cuff_outer_diameter = 8;  // Outer diameter in mm
+cuff_inner_diameter = 3.5;    // Inner diameter in mm
+cuff_outer_diameter = 9;  // Outer diameter in mm
 cuff_gap = 0.4;             // Gap for mounting in mm
 cuff_height = 8;            // Height of cuff in mm
-
+fastener_length = 30;      // Length of the integrated strap fastener in mm
+fastener_strap_width = 3;   // Width of the flexible strap
+fastener_strap_thickness = 1; // Thickness of the flexible strap
+bar_diameter = 3;           // Diameter of the T-bar
+bar_length = 10;            // Length of the T-bar
 
 // Strap parameters
 strap_thickness = 3;        // Thickness in mm
 strap_width = 20;           // Width in mm
 strap_length = 150;         // Length in mm
-cable_width = 4;            // Width of the thin cable section in mm
+cable_width = 7;            // Width of the thin cable section in mm
 taper_length = 20;          // Length of the taper from strap to cable in mm
-cable_section_length = 5;  // Length of the straight cable section at each end
+cable_section_length = 0;  // Length of the straight cable section at each end
 
 // Ridge parameters
 ridge_height = 0;         // Height of the ridge from the strap surface
@@ -28,21 +34,28 @@ module headphone_strap() {
     union() {
         // Left cuff
         translate([-strap_length/2, 0, cuff_outer_diameter/2 - strap_thickness/2])
-            rotate([90, 0, 0])
-            cuff_with_gap();
+            rotate([0, 0, 0])
+                cuff_with_strap_fastener(fastener_strap_length=fastener_length);
 
-    // Main strap body
-    strap_body();
-    
-    // Right cuff
-    translate([strap_length/2, 0, cuff_outer_diameter/2 - strap_thickness/2])
-        rotate([90, 0, 0])
-        cuff_with_gap();
+        // Main strap with slots and ridge
+        difference() {
+            union() {
+                strap_body();
+                ridge();
+            }
+            // Position for the slots, 2mm into the taper
+            slot_x_pos = (strap_length/2) - cable_section_length - taper_length + 2;
+            // Right slot
+            translate([slot_x_pos, 0, 0]) fastener_slot();
+            // Left slot
+            translate([-slot_x_pos, 0, 0]) fastener_slot();
+        }
 
-    // Add the ridge
-    ridge();
-}
-
+        // Right cuff
+        translate([strap_length/2, 0, cuff_outer_diameter/2 - strap_thickness/2])
+            rotate([0, 0, 180])
+                cuff_with_strap_fastener(fastener_strap_length=fastener_length);
+    }
 }
 
 
@@ -52,15 +65,13 @@ module cuff_with_gap() {
         // Full cuff
         cylinder(h=cuff_height, d=cuff_outer_diameter, center=true);
 
-
-    // Inner hole
-    cylinder(h=cuff_height + 1, d=cuff_inner_diameter, center=true);
-    
-    // Gap for mounting
-    translate([0, cuff_outer_diameter/2 + cuff_gap/4, 0])
-        cube([cuff_outer_diameter + 1, cuff_gap, cuff_height + 1], center=true);
-}
-
+        // Inner hole
+        cylinder(h=cuff_height + 1, d=cuff_inner_diameter, center=true);
+        
+        // Gap for mounting
+        translate([0, cuff_outer_diameter/2 + cuff_gap/4, 0])
+            cube([cuff_outer_diameter + 1, cuff_gap, cuff_height + 1], center=true);
+    }
 }
 
 
@@ -88,6 +99,12 @@ module strap_body() {
     // Right cable section
     translate([strap_length/2 - cable_section_length/2, 0, 0])
         cube([cable_section_length, cable_width, strap_thickness], center=true);
+}
+
+// Module for the T-bar fastener slot
+module fastener_slot() {
+    translate([0, 0, strap_thickness/2])
+        cube([bar_length * 1.1, bar_diameter * 1.1, strap_thickness + 1], center=true);
 }
 
 // Module for the reinforcing ridge
